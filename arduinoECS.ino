@@ -4,7 +4,7 @@
 #define ST_WAITING    0
 #define ST_SCANNING   1
 #define ST_SENDING    2
-#define ST_RECIEVING  3
+#define ST_RECEIVING  3
 #define ST_LEARNING   4
 #define ST_LSCANNING  5
 #define ST_COUNT      6
@@ -13,7 +13,7 @@
 #define IR_OUT  11
 #define ST_LED  10
 
-#define ST_SW    7
+#define MD_SW    7
 #define CTRL_SW  8
 
 #define POS1     2
@@ -23,22 +23,23 @@
 #define POS5     6
 
 
-// グローバル変数
-int STATUS = ST_WAITING;  // initial status
+// global variable
+int STATE = ST_WAITING;  // initial state
 int cPOS = 0;             // initial position of scanning LEDs
-int st_val = 0;           // value of status button
-int st_val_old = 0;       // previous value of status button
+int md_val = 0;           // value of mode button
+int md_val_old = 0;       // previous value of mode button
 int ctrl_val = 0;         // value of scanning control button
 int ctrl_val_old = 0;     // previous value of scanning control button
-IRrecv irrecv(IR_IN);     // IR reciever
+IRrecv irrecv(IR_IN);     // IR receiver
 decode_results results;   // IR decode result
+
 
 void setup(){
   //pinMode(IR_IN, INPUT);
   pinMode(IR_OUT, OUTPUT);
   pinMode(ST_LED, OUTPUT);
 
-  pinMode(ST_SW, INPUT);
+  pinMode(MD_SW, INPUT);
   pinMode(CTRL_SW, INPUT);
 
   pinMode(POS1, OUTPUT);
@@ -57,7 +58,7 @@ void setup(){
 
 void loop(){
   // scanning
-  if( STATUS == ST_SCANNING || STATUS == ST_LSCANNING ){
+  if( STATE == ST_SCANNING || STATE == ST_LSCANNING ){
     for( cPOS = POS1; cPOS <= POS5; cPOS++ ){
       digitalWrite(cPOS, HIGH);
       if( cPOS > POS1 ){
@@ -66,24 +67,25 @@ void loop(){
         digitalWrite(POS5, LOW);      
       }
       delay(800);
-      if( STATUS == ST_SENDING || STATUS == ST_COUNT ){
+      if( STATE == ST_SENDING || STATE == ST_COUNT ){
         break;
       }
     }
   }
 
   // send IR signal
-  if( STATUS == ST_SENDING ){
+  if( STATE == ST_SENDING ){
+    // flushing 3 times
     for( int i = 0; i < 5; i++ ){
       digitalWrite(cPOS, !digitalRead(cPOS));
       delay(100);
     }
     //SENDSENDSENDSENDSEND
-    STATUS = ST_WAITING; // back to WAITING mode
+    STATE = ST_WAITING; // back to WAITING state
   }
 
   // indicate chaning to RECIEVE mode 
-  if( STATUS == ST_COUNT ){
+  if( STATE == ST_COUNT ){
     for( int i = 0; i < 5; i++ ){
       digitalWrite(cPOS, !digitalRead(cPOS));
       delay(100);
@@ -96,12 +98,12 @@ void loop(){
       digitalWrite(i, LOW);
       delay(1000);
     }
-    irrecv.enableIRIn();    // IR reciever on
-    STATUS = ST_RECIEVING;  // status change
+    irrecv.enableIRIn();    // IR receiver on
+    STATE = ST_RECEIVING;  // state change
   }
     
-  // recieving IR signal
-  if( STATUS == ST_RECIEVING ){
+  // receiving IR signal
+  if( STATE == ST_RECEIVING ){
     if( irrecv.decode(&results) ){
       dump(&results);
       irrecv.resume(); // Receive the next value
@@ -109,7 +111,7 @@ void loop(){
       //irrecv.decode(&results);
       //Serial.println("*****");
       //Serial.println(results.value, HEX);
-      //STATUS = ST_WAITING; // 受信終了後はWAITINGへ
+      //STATE = ST_WAITING; // 受信終了後はWAITINGへ
       //digitalWrite(ST_LED, LOW);
     //irrecv.resume();
   }  
@@ -117,48 +119,48 @@ void loop(){
 
 
 void btnCheck(){
-  st_val = digitalRead(ST_SW);
+  md_val = digitalRead(MD_SW);
   ctrl_val = digitalRead(CTRL_SW);
   
   // mode change SW  
-  if( (st_val == HIGH) && (st_val_old == LOW) ){    
-    switch( STATUS ){
+  if( (md_val == HIGH) && (md_val_old == LOW) ){    
+    switch( STATE ){
       case ST_WAITING:
         digitalWrite(ST_LED, HIGH);
-        STATUS = ST_LEARNING;
+        STATE = ST_LEARNING;
         break;
       case ST_LEARNING:
         digitalWrite(ST_LED, LOW);
-        STATUS = ST_WAITING;
+        STATE = ST_WAITING;
         break;
       case ST_LSCANNING:
         digitalWrite(ST_LED, LOW);
-        STATUS = ST_WAITING;
+        STATE = ST_WAITING;
         break;
     }
-    delay(10);
+    delay(10); // for chattering
   }
   
   // control SW  
   if( (ctrl_val == HIGH) && (ctrl_val_old == LOW) ){
-    switch( STATUS ){
+    switch( STATE ){
       case ST_WAITING:
-        STATUS = ST_SCANNING;
+        STATE = ST_SCANNING;
         break;
       case ST_LEARNING:
-        STATUS = ST_LSCANNING;
+        STATE = ST_LSCANNING;
         break;
       case ST_SCANNING:
-        STATUS = ST_SENDING;
+        STATE = ST_SENDING;
         break;
       case ST_LSCANNING:
-        STATUS = ST_COUNT;
+        STATE = ST_COUNT;
         break;
     }
-    delay(10);
+    delay(10); // for chattering
   }
   
-  st_val_old = st_val;
+  md_val_old = md_val;
   ctrl_val_old = ctrl_val;
 }
 
