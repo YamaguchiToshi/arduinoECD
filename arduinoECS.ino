@@ -26,12 +26,12 @@
 // グローバル変数
 int STATUS = ST_WAITING;  // initial status
 int cPOS = 0;             // initial position of scanning LEDs
-IRrecv irrecv(IR_IN);     // IR reciever
-decode_results results;   // IR decode result
 int st_val = 0;           // value of status button
 int st_val_old = 0;       // previous value of status button
 int ctrl_val = 0;         // value of scanning control button
 int ctrl_val_old = 0;     // previous value of scanning control button
+IRrecv irrecv(IR_IN);     // IR reciever
+decode_results results;   // IR decode result
 
 void setup(){
   //pinMode(IR_IN, INPUT);
@@ -120,7 +120,7 @@ void btnCheck(){
   st_val = digitalRead(ST_SW);
   ctrl_val = digitalRead(CTRL_SW);
   
-  // モード切り替えスイッチ  
+  // mode change SW  
   if( (st_val == HIGH) && (st_val_old == LOW) ){    
     switch( STATUS ){
       case ST_WAITING:
@@ -139,7 +139,7 @@ void btnCheck(){
     delay(10);
   }
   
-  // コントロールスイッチ  
+  // control SW  
   if( (ctrl_val == HIGH) && (ctrl_val_old == LOW) ){
     switch( STATUS ){
       case ST_WAITING:
