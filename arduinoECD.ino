@@ -24,8 +24,8 @@
 
 
 // global variable
-int STATE = ST_WAITING;  // initial state
-int cPOS = 0;             // initial position of scanning LEDs
+int STATE = ST_WAITING;   // initial state
+int cPOS = 0;             // position of scanning LEDs
 int md_val = 0;           // value of mode button
 int md_val_old = 0;       // previous value of mode button
 int ctrl_val = 0;         // value of scanning control button
@@ -99,7 +99,7 @@ void loop(){
       delay(1000);
     }
     irrecv.enableIRIn();    // IR receiver on
-    STATE = ST_RECEIVING;  // state change
+    STATE = ST_RECEIVING;   // change state 
   }
     
   // receiving IR signal
