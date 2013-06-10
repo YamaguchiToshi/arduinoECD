@@ -1,5 +1,14 @@
+/**
+ * Arduino ECD
+ *
+ * Version 0.0.1  May, 2013
+ * Copyright (c) 2013 Toshimitsu Yamaguchi. All rights reserved.
+ * 
+ */
+
 #include <MsTimer2.h>
 #include <IRremote.h>
+#include <memory.h>
 
 #define ST_WAITING    0
 #define ST_SCANNING   1
@@ -22,6 +31,13 @@
 #define POS4     5
 #define POS5     6
 
+// IR signal
+struct IRsignal {
+  unsigned int maker;
+  unsigned long hex;
+  int bits;
+  unsigned int raw[RAWBUF];
+};
 
 // global variable
 int STATE = ST_WAITING;   // initial state
@@ -31,8 +47,11 @@ int md_val_old = 0;       // previous value of mode button
 int ctrl_val = 0;         // value of scanning control button
 int ctrl_val_old = 0;     // previous value of scanning control button
 IRrecv irrecv(IR_IN);     // IR receiver
+IRsend irsend;            // IR sender
 decode_results results;   // IR decode result
-
+IRsignal received;
+IRsignal sended;
+IRsignal memory[5];
 
 void setup(){
   //pinMode(IR_IN, INPUT);
@@ -81,6 +100,7 @@ void loop(){
       delay(100);
     }
     //SENDSENDSENDSENDSEND
+    //irsend.sendRaw(memory[0].raw, 20, 38);
     STATE = ST_WAITING; // back to WAITING state
   }
 
@@ -105,14 +125,21 @@ void loop(){
   // receiving IR signal
   if( STATE == ST_RECEIVING ){
     if( irrecv.decode(&results) ){
-      dump(&results);
+      int count = results.rawlen;
+      memory[cPOS-2].maker = (unsigned int)results.decode_type;
+      memory[cPOS-2].hex = (unsigned long)results.value;
+      memory[cPOS-2].bits = (int)results.bits;
+      for(int i = 0; i < count; i++){
+        memory[cPOS-2].raw[i] = (int)results.rawbuf[i];
+      }
+      //dump(&results);
       irrecv.resume(); // Receive the next value
     }
-      //irrecv.decode(&results);
-      //Serial.println("*****");
-      //Serial.println(results.value, HEX);
-      //STATE = ST_WAITING; // 受信終了後はWAITINGへ
-      //digitalWrite(ST_LED, LOW);
+    //irrecv.decode(&results);
+    //Serial.println("*****");
+    //Serial.println(results.value, HEX);
+    STATE = ST_WAITING; // 受信終了後はWAITINGへ
+    digitalWrite(ST_LED, LOW);
     //irrecv.resume();
   }  
 }
@@ -170,7 +197,16 @@ void btnCheck(){
 
 
 void dump(decode_results *results) {
+
   int count = results->rawlen;
+
+  //memory[cPOS-2].maker = (unsigned int)results->decode_type;
+  //memory[cPOS-2].hex = (unsigned long)results->value;
+  //memory[cPOS-2].bits = (int)results->bits;
+  //for(int i = 0; i < count; i++){
+  //  memory[cPOS-2].raw[i] = (int)results->rawbuf[i];
+  //}
+
   if (results->decode_type == UNKNOWN) {
     Serial.print("Unknown encoding: ");
   } 
@@ -212,4 +248,5 @@ void dump(decode_results *results) {
     Serial.print(" ");
   }
   Serial.println("");
+
 }

@@ -1,0 +1,26 @@
+digraph state{
+    node  [shape = circle];
+    start [height = 0.3, width = 0.3, style = filled, fillcolor = black, label = ""];
+
+    node [
+        shape = record
+        style = rounded    
+    ];
+    a [label = "ST_WAITING"]
+    b [label = "{ST_SCANNING|scanning the selection LEDs}"]
+    c [label = "{ST_SENDING|sending the IR signal}"]
+    d [label = "{ST_LEARNING|learning mode\nmode LED on}"]
+    e [label = "{ST_LSCANNING|scanning the selection LEDS}"]
+    f [label = "{ST_RECEIVING|IR Receiver module on}"]
+
+    start -> a
+    a -> b [label = "ctrl_sw"]
+    b -> c [label = "ctrl_sw"]
+    c -> a
+    a -> d [label = "md_sw"]
+    d -> a [label = "md_sw"]
+    d -> e [label = "ctrl_sw"]
+    e -> a [label = "md_sw"]
+    e -> f [label = "ctrl_sw"]
+    f -> a
+}
