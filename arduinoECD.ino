@@ -115,7 +115,7 @@ void loop(){
       digitalWrite(cPOS, !digitalRead(cPOS));
       delay(100);
     }
-    sendCode(1);
+    sendCode(0);
     STATE = ST_WAITING; // back to WAITING state
   }
 
@@ -131,7 +131,7 @@ void loop(){
     }
     for( int i = 4; i >= 0; i-- ){
       digitalWrite(pospin[i], LOW);
-      delay(400);
+      delay(700);
     }
 
     irrecv.enableIRIn();    // IR receiver on
@@ -143,6 +143,7 @@ void loop(){
     if( irrecv.decode(&results) ){
       myIRcodes[pin2pos(cPOS)].toggle = 0;
       myIRcodes[pin2pos(cPOS)].codeType = -1;
+      irrecv.resume();
       storeCode(&results);
     }
   }  
@@ -209,6 +210,7 @@ int pin2pos(int pinnum){
 void storeCode(decode_results *results) {
   int storeID = pin2pos(cPOS);
   myIRcodes[storeID].codeType = results->decode_type;
+  Serial.println(results->decode_type);
   int count = results->rawlen;
   if (myIRcodes[storeID].codeType == UNKNOWN) {
     Serial.println("Received unknown code, saving as raw");
